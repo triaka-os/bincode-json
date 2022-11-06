@@ -2,7 +2,7 @@
 //!
 //! ## Features
 //!  - `preserve-order`: use `indexmap` instead of HashMap to preserve object fields' order.
-//!  - `json`: enables converting from/to [serde_json::Value].
+//!  - `json`: enables converting from/to `serde_json::Value`.
 
 pub mod de;
 pub mod error;

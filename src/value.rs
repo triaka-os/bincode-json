@@ -5,13 +5,13 @@ use serde::{de, ser};
 /// Represents a `bincode-json` key/value type.
 ///
 /// This won't preserve the order. To preserve order, enable `preserve-order` feature.
-#[cfg(not(features = "preserve_order"))]
+#[cfg(not(feature = "preserve-order"))]
 pub type Map<K, V> = std::collections::HashMap<K, V>;
 
 /// Represents a `bincode-json` key/value type.
 ///
 /// `preserve-order` feature is enabled, so this will preserve the order.
-#[cfg(features = "preserve_order")]
+#[cfg(feature = "preserve-order")]
 pub type Map<K, V> = indexmap::IndexMap<K, V>;
 
 macro_rules! value_from_int {
@@ -97,7 +97,7 @@ impl Value {
         }
     }
 
-    #[cfg(features = "json")]
+    #[cfg(feature = "json")]
     /// Converts a [Value] to a [serde_json::Value].
     pub fn to_json(self) -> serde_json::Value {
         match self {
@@ -172,7 +172,7 @@ impl ser::Serialize for Value {
     }
 }
 
-#[cfg(features = "json")]
+#[cfg(feature = "json")]
 impl From<serde_json::Value> for Value {
     fn from(v: serde_json::Value) -> Self {
         match v {
