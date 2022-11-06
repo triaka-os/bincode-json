@@ -14,6 +14,33 @@ pub type Map<K, V> = std::collections::HashMap<K, V>;
 #[cfg(features = "preserve_order")]
 pub type Map<K, V> = indexmap::IndexMap<K, V>;
 
+macro_rules! value_from_int {
+    ($x:tt) => {
+        impl From<$x> for Value {
+            fn from(i: $x) -> Self {
+                Self::Integer(i as _)
+            }
+        }
+    };
+}
+macro_rules! value_is {
+    ($x:tt, $v:ident) => {
+        pub fn $x(&self) -> bool {
+            matches!(self, Self::$v(_))
+        }
+    }
+}
+macro_rules! value_as {
+    ($x:tt, $v:ident, $t:ty) => {
+        pub fn $x(&self) -> Option<&$t> {
+            match self {
+                Value::$v(v) => Some(v),
+                _ => None,
+            }
+        }
+    }
+}
+
 /// Represents any valid `bincode-json` value.
 #[derive(Debug, Clone, bincode::Encode, bincode::Decode)]
 pub enum Value {
@@ -41,6 +68,20 @@ pub enum Value {
     /// Represents a `bincode-json` string value.
     String(String),
 }
+impl<'a> From<&'a str> for Value {
+    fn from(s: &'a str) -> Self {
+        Self::String(s.into())
+    }
+}
+value_from_int!(i8);
+value_from_int!(u8);
+value_from_int!(i16);
+value_from_int!(u16);
+value_from_int!(i32);
+value_from_int!(u32);
+value_from_int!(i64);
+value_from_int!(u64);
+
 impl Value {
     /// Gets the `bincode-json` type of the value.
     pub(crate) fn error_description(&self) -> &'static str {
@@ -82,6 +123,20 @@ impl Value {
             }
         }
     }
+
+    /// Returns `true` if this value is `Null`.
+    pub fn is_null(&self) -> bool {
+        matches!(self, Self::Null)
+    }
+
+    value_is!(is_str, String);
+    value_as!(as_str, String, str);
+
+    value_is!(is_integer, Integer);
+    value_as!(as_integer, Integer, i64);
+
+    value_is!(is_float, Float);
+    value_as!(as_float, Float, f64);
 }
 impl<'de> de::Deserialize<'de> for Value {
     fn deserialize<D>(deserializer: D) -> Result<Value, D::Error>

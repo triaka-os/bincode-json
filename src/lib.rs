@@ -20,12 +20,12 @@ pub fn from_value<T: DeserializeOwned>(val: Value) -> Result<T> {
 }
 
 /// Convert a `T` into [Value].
-pub fn to_value<T: Serialize>(val: T) -> Result<Value> {
+pub fn to_value<T: Serialize>(val: &T) -> Result<Value> {
     val.serialize(ser::Serializer::new())
 }
 
 /// Serialize the given data structure as a byte vector.
-pub fn to_vec<T: Serialize>(val: T) -> Result<Vec<u8>> {
+pub fn to_vec<T: Serialize>(val: &T) -> Result<Vec<u8>> {
     let value = to_value(val)?;
     Ok(bincode::encode_to_vec(value, bincode::config::standard())?)
 }
