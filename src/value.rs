@@ -3,7 +3,6 @@
 use serde::{de, ser};
 
 /// Represents a `bincode-json` key/value type.
-#[cfg(not(feature = "preserve-order"))]
 pub type Map<K, V> = std::collections::HashMap<K, V>;
 
 macro_rules! value_from_int {
@@ -148,7 +147,7 @@ impl ser::Serialize for Value {
         S: serde::Serializer,
     {
         match self {
-            Value::Null => serializer.serialize_unit(),
+            Value::Null => serializer.serialize_none(),
             Value::Boolean(b) => serializer.serialize_bool(*b),
             Value::Blob(b) => serializer.serialize_bytes(b),
             Value::Integer(n) => serializer.serialize_i64(*n),
