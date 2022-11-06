@@ -3,16 +3,8 @@
 use serde::{de, ser};
 
 /// Represents a `bincode-json` key/value type.
-///
-/// This won't preserve the order. To preserve order, enable `preserve-order` feature.
 #[cfg(not(feature = "preserve-order"))]
 pub type Map<K, V> = std::collections::HashMap<K, V>;
-
-/// Represents a `bincode-json` key/value type.
-///
-/// `preserve-order` feature is enabled, so this will preserve the order.
-#[cfg(feature = "preserve-order")]
-pub type Map<K, V> = indexmap::IndexMap<K, V>;
 
 macro_rules! value_from_int {
     ($x:tt) => {
@@ -105,7 +97,10 @@ impl Value {
             Self::Blob(blob) => serde_json::Value::String(base64::encode(blob)),
             Self::Boolean(b) => serde_json::Value::Bool(b),
             Self::Integer(i) => serde_json::Value::Number(i.into()),
-            Self::Float(f) => serde_json::Value::Number(f.into()),
+            Self::Float(f) => match serde_json::Number::from_f64(f) {
+                Some(n) => serde_json::Value::Number(n),
+                None => serde_json::Value::String(f.to_string()),
+            },
             Self::Object(o) => {
                 let mut map = serde_json::Map::with_capacity(o.len());
                 for (k, v) in o {
@@ -115,9 +110,9 @@ impl Value {
             }
             Self::String(s) => serde_json::Value::String(s),
             Self::Array(a) => {
-                let mut arr = Vec::with_capacity(o.len());
+                let mut arr = Vec::with_capacity(a.len());
                 for v in a {
-                    arr.insert(v.to_json());
+                    arr.push(v.to_json());
                 }
                 serde_json::Value::Array(arr)
             }
@@ -150,7 +145,7 @@ impl ser::Serialize for Value {
     #[inline]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: ::serde::Serializer,
+        S: serde::Serializer,
     {
         match self {
             Value::Null => serializer.serialize_unit(),
@@ -230,21 +225,7 @@ impl<'de> de::Visitor<'de> for Visitor {
         Ok(Value::Integer(value as _))
     }
 
-    fn visit_u8<E>(self, value: u8) -> Result<Value, E>
-    where
-        E: de::Error,
-    {
-        Ok(Value::Integer(value as _))
-    }
-
     fn visit_i16<E>(self, value: i16) -> Result<Value, E>
-    where
-        E: de::Error,
-    {
-        Ok(Value::Integer(value as _))
-    }
-
-    fn visit_u16<E>(self, value: u16) -> Result<Value, E>
     where
         E: de::Error,
     {
@@ -258,18 +239,32 @@ impl<'de> de::Visitor<'de> for Visitor {
         Ok(Value::Integer(value as _))
     }
 
-    fn visit_u32<E>(self, value: u32) -> Result<Value, E>
+    fn visit_i64<E>(self, value: i64) -> Result<Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(Value::Integer(value))
+    }
+
+    fn visit_u8<E>(self, value: u8) -> Result<Value, E>
     where
         E: de::Error,
     {
         Ok(Value::Integer(value as _))
     }
 
-    fn visit_i64<E>(self, value: i64) -> Result<Value, E>
+    fn visit_u16<E>(self, value: u16) -> Result<Value, E>
     where
         E: de::Error,
     {
-        Ok(Value::Integer(value))
+        Ok(Value::Integer(value as _))
+    }
+
+    fn visit_u32<E>(self, value: u32) -> Result<Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(Value::Integer(value as _))
     }
 
     fn visit_u64<E>(self, value: u64) -> Result<Value, E>
@@ -294,6 +289,20 @@ impl<'de> de::Visitor<'de> for Visitor {
         Ok(Value::String(value))
     }
 
+    fn visit_bytes<E>(self, v: &[u8]) -> Result<Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(Value::Blob(v.into()))
+    }
+
+    fn visit_byte_buf<E>(self, v: Vec<u8>) -> Result<Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(Value::Blob(v))
+    }
+
     fn visit_none<E>(self) -> Result<Value, E> {
         Ok(Value::Null)
     }
@@ -307,6 +316,13 @@ impl<'de> de::Visitor<'de> for Visitor {
 
     fn visit_unit<E>(self) -> Result<Value, E> {
         Ok(Value::Array(vec![]))
+    }
+
+    fn visit_newtype_struct<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_any(self)
     }
 
     fn visit_seq<V>(self, mut visitor: V) -> Result<Value, V::Error>
@@ -333,26 +349,5 @@ impl<'de> de::Visitor<'de> for Visitor {
         }
 
         Ok(Value::Object(map))
-    }
-
-    fn visit_bytes<E>(self, v: &[u8]) -> Result<Value, E>
-    where
-        E: de::Error,
-    {
-        Ok(Value::Blob(v.into()))
-    }
-
-    fn visit_byte_buf<E>(self, v: Vec<u8>) -> Result<Value, E>
-    where
-        E: de::Error,
-    {
-        Ok(Value::Blob(v))
-    }
-
-    fn visit_newtype_struct<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_any(self)
     }
 }

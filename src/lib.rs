@@ -1,7 +1,6 @@
 //! `bincode-json` is a wrapper around `bincode` to encode/decode JSON-like objects.
 //!
 //! ## Features
-//!  - `preserve-order`: use `indexmap` instead of HashMap to preserve object fields' order.
 //!  - `json`: enables converting from/to `serde_json::Value`.
 
 pub mod de;

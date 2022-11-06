@@ -9,9 +9,6 @@ use serde::de::{self, Deserialize, Visitor};
 #[cfg(not(features = "preserve_order"))]
 use std::collections::hash_map as map;
 
-#[cfg(features = "preserve_order")]
-use indexmap::map;
-
 macro_rules! forward_to_deserialize {
     ($(
         $name:ident ( $( $arg:ident : $ty:ty ),* );
