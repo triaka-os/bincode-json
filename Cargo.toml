@@ -1,0 +1,24 @@
+[package]
+name = "bincode-json"
+description = "A wrapper around `bincode` to encode/decode JSON-like objects."
+documentation = "https://docs.rs/bincode-json"
+readme = "README.md"
+repository = "https://github.com/triaka-os/bincode-json"
+authors = ["sisungo <sisungo@proton.me>"]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+preserve-order = ["dep:indexmap"]
+json = ["dep:serde_json"]
+
+[dependencies]
+base64 = { version = "0.13", optional = true }
+bincode = "2.0.0-rc.2"
+indexmap = { version = "1", optional = true }
+serde = "1"
+serde_json = { version = "1", optional = true }
+thiserror = "1"
