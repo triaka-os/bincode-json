@@ -131,6 +131,12 @@ impl Value {
 
     value_is!(is_float, Float);
     value_as!(as_float, Float, f64);
+
+    value_is!(is_blob, Blob);
+    value_as!(as_blob, Blob, [u8]);
+
+    value_is!(is_bool, Boolean);
+    value_as!(as_bool, Boolean, bool);
 }
 impl<'de> de::Deserialize<'de> for Value {
     fn deserialize<D>(deserializer: D) -> Result<Value, D::Error>
